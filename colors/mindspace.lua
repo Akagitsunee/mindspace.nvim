@@ -1,2 +1,3 @@
-vim.cmd("packadd mindspace.nvim")
-require("mindspace")
+lua << EOF
+require('mindspace').setup()
+EOF
