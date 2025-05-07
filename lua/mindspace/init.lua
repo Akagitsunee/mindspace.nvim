@@ -1,75 +1,81 @@
 return {
-    'Akagitsunee/mindspace.nvim',
+    "Akagitsunee/mindspace.nvim",
     lazy = true,
     priority = 1000,
+    opts = {
+      -- Options configuration moved to opts table for Lazy's automatic setup
+      listchars = {
+        tab = "│ ",
+        trail = "·",
+        extends = "›",
+        precedes = "‹",
+      },
+      float_opts = {
+        style = "minimal",
+        border = "rounded",
+        title_pos = "center",
+      }
+    },
     config = function()
-      -- Define colors that promote focus and reduce visual noise
       local colors = {
-        -- Main editor colors
-        bg = "#1E1F22",          -- Darker background like WebStorm
-        fg = "#A9B7C6",          -- Softer foreground for less eye strain
-        border = "#2B2D30",      -- Distinct but subtle borders
-        cursor_line = "#2B2D30", -- Subtle cursor line
-        
-        -- Syntax highlighting
-        keyword = "#CC7832",     -- Orange for keywords (less harsh than purple)
-        func = "#FFC66D",        -- Warm yellow for functions
-        string = "#6A8759",      -- Soft green for strings
-        number = "#6897BB",      -- Soft blue for numbers
-        comment = "#808080",     -- Muted gray for comments
-        
-        -- UI elements
-        selection = "#214283",    -- Visible but not overwhelming selection
-        line_nr = "#606366",     -- Visible but muted line numbers
-        line_nr_cursor = "#A9B7C6", -- Brighter current line number
-        
-        -- Diagnostic colors
-        error = "#BC3F3C",       -- Soft red for errors
-        warn = "#BE9117",        -- Warm yellow for warnings
-        info = "#3592C4",        -- Calm blue for info
-        hint = "#437F54",        -- Subtle green for hints
+        bg = "#1E1F22",
+        fg = "#A9B7C6",
+        border = "#2B2D30",
+        cursor_line = "#2B2D30",
+        keyword = "#CC7832",
+        func = "#FFC66D",
+        string = "#6A8759",
+        number = "#6897BB",
+        comment = "#808080",
+        selection = "#214283",
+        line_nr = "#606366",
+        line_nr_cursor = "#A9B7C6",
+        error = "#BC3F3C",
+        warn = "#BE9117",
+        info = "#3592C4",
+        hint = "#437F54",
       }
   
-      -- Set up highlight groups
-      local highlights = {
-        -- Editor UI
-        Normal = { fg = colors.fg, bg = colors.bg },
-        NormalFloat = { fg = colors.fg, bg = colors.bg },
-        FloatBorder = { fg = colors.border, bg = colors.bg },
-        CursorLine = { bg = colors.cursor_line },
-        LineNr = { fg = colors.line_nr },
-        CursorLineNr = { fg = colors.line_nr_cursor },
-        SignColumn = { bg = colors.bg },
-        VertSplit = { fg = colors.border, bg = colors.bg },
-        
-        -- Syntax
-        Keyword = { fg = colors.keyword, bold = true },
-        Function = { fg = colors.func },
-        String = { fg = colors.string },
-        Number = { fg = colors.number },
-        Comment = { fg = colors.comment, italic = true },
-        
-        -- Selection
-        Visual = { bg = colors.selection },
-        Search = { bg = colors.selection },
-        
-        -- Diagnostics
-        DiagnosticError = { fg = colors.error },
-        DiagnosticWarn = { fg = colors.warn },
-        DiagnosticInfo = { fg = colors.info },
-        DiagnosticHint = { fg = colors.hint },
-        
-        -- Window borders for better visual separation
-        WinSeparator = { fg = colors.border, bold = true },
-      }
-  
-      -- Apply highlights
-      for group, opts in pairs(highlights) do
+      -- Create the colorscheme
+      local hi = function(group, opts)
         vim.api.nvim_set_hl(0, group, opts)
       end
   
-      -- Set some visual preferences for ADHD-friendly experience
-      vim.opt.linespace = 1
+      -- Reset existing highlights
+      vim.cmd("highlight clear")
+      if vim.fn.exists("syntax_on") then
+        vim.cmd("syntax reset")
+      end
+  
+      -- Editor UI
+      hi("Normal", { fg = colors.fg, bg = colors.bg })
+      hi("NormalFloat", { fg = colors.fg, bg = colors.bg })
+      hi("FloatBorder", { fg = colors.border, bg = colors.bg })
+      hi("CursorLine", { bg = colors.cursor_line })
+      hi("LineNr", { fg = colors.line_nr })
+      hi("CursorLineNr", { fg = colors.line_nr_cursor })
+      hi("SignColumn", { bg = colors.bg })
+      hi("VertSplit", { fg = colors.border, bg = colors.bg })
+      hi("WinSeparator", { fg = colors.border, bold = true })
+  
+      -- Syntax
+      hi("Keyword", { fg = colors.keyword, bold = true })
+      hi("Function", { fg = colors.func })
+      hi("String", { fg = colors.string })
+      hi("Number", { fg = colors.number })
+      hi("Comment", { fg = colors.comment, italic = true })
+  
+      -- Selection
+      hi("Visual", { bg = colors.selection })
+      hi("Search", { bg = colors.selection })
+  
+      -- Diagnostics
+      hi("DiagnosticError", { fg = colors.error })
+      hi("DiagnosticWarn", { fg = colors.warn })
+      hi("DiagnosticInfo", { fg = colors.info })
+      hi("DiagnosticHint", { fg = colors.hint })
+  
+      -- Set options
       vim.opt.list = true
       vim.opt.listchars:append({
         tab = "│ ",
@@ -80,23 +86,28 @@ return {
       vim.opt.signcolumn = "yes"
       vim.opt.cursorline = true
       vim.opt.number = true
-      vim.opt.relativenumber = false -- Absolute numbers are less distracting
-  
-      -- Additional floating window settings for better visual hierarchy
-      local float_opts = {
-        style = "minimal",
-        border = "rounded",
-        title_pos = "center",
-      }
-  
-      -- Override floating window creation
-      local orig_open_float = vim.lsp.util.open_floating_preview
-      vim.lsp.util.open_floating_preview = function(contents, syntax, opts, ...)
-        opts = vim.tbl_deep_extend("force", opts or {}, float_opts)
-        return orig_open_float(contents, syntax, opts, ...)
-      end
+      vim.opt.relativenumber = false
   
       -- Set colorscheme name
       vim.g.colors_name = "mindspace"
+    end,
+    -- Add build step to create colors directory and file
+    build = function()
+      local colors_dir = vim.fn.stdpath("config") .. "/colors"
+      if vim.fn.isdirectory(colors_dir) == 0 then
+        vim.fn.mkdir(colors_dir, "p")
+      end
+      
+      local colors_file = colors_dir .. "/mindspace.lua"
+      local content = [[
+        vim.cmd("packadd mindspace.nvim")
+        require("mindspace")
+      ]]
+      
+      local file = io.open(colors_file, "w")
+      if file then
+        file:write(content)
+        file:close()
+      end
     end
   }
